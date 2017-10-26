@@ -11,18 +11,14 @@ public class HarmonisationServiceTest {
     HarmonisationService harmonisationService = new HarmonisationService();
 
     @Test
-    public void getMajorChordHarmonisation() {
-        System.out.println(ReadableNote.toReadable(10));
+    public void getMajorChordHarmonisation() throws TryToPlayTheGoodNote {
+        System.out.println(ReadableNote.toReadable(17));
 
 
-        String chords = harmonisationService.getMajorChordHarmonisation(10, 10)
+        System.out.println(harmonisationService.getMajorChordHarmonisation(5, 17)
                 .stream()
-                .map(chord -> chord.stream()
-                        .map(ReadableNote::toReadable)
-                        .collect(Collectors.joining(" ")))
-                .collect(Collectors.joining(", "));
-
-        System.out.println(chords);
+                .map(ReadableNote::toReadable)
+                .collect(Collectors.joining(", ")));
 
     }
 

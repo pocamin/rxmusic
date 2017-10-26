@@ -28,7 +28,6 @@ public class SoftShakeMixer5 {
 
     /**
      * Lets add more complex rhythms
-     * I don't want to play all day long
      */
     public SoftShakeMixer5() throws InterruptedException {
         Subject<Long> beat = PublishSubject.create();
@@ -39,19 +38,22 @@ public class SoftShakeMixer5 {
                 .subscribe(__ -> mySynthesizer.playDrums(ClosedHiHat, 200_000, MED_VELOCITY),
                         DO_NOTHING_ON_ERROR);
 
-        SN_RHYTHM.repeat(LOT).zipWith(beat, (mustPlay, __) -> mustPlay)
+        SN_RHYTHM.zipWith(beat, (mustPlay, __) -> mustPlay)
+                .repeat()
                 .skip(5, TimeUnit.SECONDS)
                 .filter(mustPlay -> mustPlay)
                 .subscribe(__ -> mySynthesizer.playDrums(AcousticSnare, 200_000, HIGH_VELOCITY));
 
 
-        TM_RHYTHM.repeat(LOT).zipWith(beat, (mustPlay, __) -> mustPlay)
+        TM_RHYTHM.zipWith(beat, (mustPlay, __) -> mustPlay)
+                .repeat()
                 .filter(mustPlay -> mustPlay)
                 .skip(3, TimeUnit.SECONDS)
                 .subscribe(__ -> mySynthesizer.playDrums(HighTom, 200_000, HIGH_VELOCITY));
 
 
-        CB_RHYTHM.repeat(LOT).zipWith(beat, (mustPlay, __) -> mustPlay)
+        CB_RHYTHM.zipWith(beat, (mustPlay, __) -> mustPlay)
+                .repeat()
                 .filter(mustPlay -> mustPlay)
                 .subscribe(__ -> mySynthesizer.playDrums(CrashCymbal_1, 1_000_000, HIGH_VELOCITY));
 

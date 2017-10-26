@@ -8,6 +8,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import static org.softshake.rxmusic.synth.MySynthesizer.MED_VELOCITY;
+import static org.softshake.rxmusic.synth.MySynthesizer.NO_NOTE;
 import static org.softshake.rxmusic.synth.Utils.DO_NOTHING_ON_ERROR;
 
 public class SoftShakeMixer8 {
@@ -19,13 +20,12 @@ public class SoftShakeMixer8 {
 
     private static Observable<Integer> MELODY = Observable.fromArray(
             SoundConstants.NoteC,
-            SoundConstants.NoteG,
-            SoundConstants.NoteA
+            SoundConstants.NoteA,
+            SoundConstants.NoteD
     );
 
     /**
-     * Lets add more complex rhythms
-     * I don't want to play all day long
+     * Sometime great power means great responsibility
      */
     public SoftShakeMixer8() throws InterruptedException {
         Subject<Long> beat = PublishSubject.create();
@@ -33,7 +33,6 @@ public class SoftShakeMixer8 {
 
 
         Observable<Integer> playedNotes = MELODY
-                .repeat(100)
                 .flatMap(note ->
                         harmonisationService.getOneChordFromMajorScaleContainingNote(SoundConstants.NoteC, note)
                                 .concatWith(Observable.just(MySynthesizer.NO_NOTE).repeat(5))
@@ -41,9 +40,16 @@ public class SoftShakeMixer8 {
                 )
                 .zipWith(beat, (note, __) -> note);
 
+
+        // Very good idea !!! let's also display notes
+        playedNotes
+                .filter(note -> note != NO_NOTE)
+                .map(ReadableNote::toReadable)
+                .subscribe(System.out::println);
+
+
         playedNotes.subscribe(note -> mySynthesizer.playNote(MySynthesizer.Instr.ACCORDION, note, 250,
                 MED_VELOCITY));
-
 
         Observable.interval(250, TimeUnit.MILLISECONDS)
                 .take(15, TimeUnit.SECONDS)

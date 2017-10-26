@@ -7,10 +7,13 @@ import io.reactivex.subjects.Subject;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import static io.reactivex.Observable.just;
 import static org.softshake.rxmusic.synth.MySynthesizer.MED_VELOCITY;
+import static org.softshake.rxmusic.synth.MySynthesizer.NO_NOTE;
+import static org.softshake.rxmusic.synth.SoundConstants.*;
 import static org.softshake.rxmusic.synth.Utils.DO_NOTHING_ON_ERROR;
 
-public class SoftShakeMixer6 {
+public class SoftShakeMixer7notSoReliable {
 
 
     private MySynthesizer mySynthesizer = new MySynthesizer();
@@ -18,28 +21,37 @@ public class SoftShakeMixer6 {
 
 
     private static Observable<Integer> MELODY = Observable.fromArray(
-            SoundConstants.NoteC,
-            SoundConstants.NoteG,
-            SoundConstants.NoteA
+            NoteC,
+            NoteF,
+            NoteG,
+            NoteDownDp
     );
 
     /**
-     * Lets call a service
+     * Life is a bitch
      */
-    public SoftShakeMixer6() throws InterruptedException {
+    public SoftShakeMixer7notSoReliable() throws InterruptedException {
         Subject<Long> beat = PublishSubject.create();
         HarmonisationService harmonisationService = new HarmonisationService();
 
+
+        Observable<Integer> alternative = just(NoteC, NO_NOTE, NO_NOTE);
+
         Observable<Integer> playedNotes = MELODY
                 .repeat(100)
-                .flatMap(note -> harmonisationService.getOneChordFromMajorScaleContainingNote(SoundConstants.NoteC, note))
+                .flatMap(note ->
+                        someTimeLileSucks(harmonisationService
+                                .getOneChordFromMajorScaleContainingNote(NoteC, note))
+                                .onErrorResumeNext(alternative)
+                                .concatWith(just(NO_NOTE))
+                )
                 .zipWith(beat, (note, __) -> note);
 
         playedNotes.subscribe(note -> mySynthesizer.playNote(MySynthesizer.Instr.ACCORDION, note, 250,
                 MED_VELOCITY));
 
 
-        Observable.interval(250, TimeUnit.MILLISECONDS)
+        Observable.interval(125, TimeUnit.MILLISECONDS)
                 .take(15, TimeUnit.SECONDS)
                 .subscribe(beat::onNext, DO_NOTHING_ON_ERROR, () -> {
                     beat.onComplete();
@@ -47,9 +59,18 @@ public class SoftShakeMixer6 {
                 });
     }
 
+    private <T> Observable<T> someTimeLileSucks(Observable<T> originalObservable) {
+        return originalObservable.map(t -> {
+            if (Math.random() > 0.9) {
+                throw new OupsIUnplugTheCable();
+            }
+            return t;
+        });
+    }
+
 
     public static void main(String[] args) throws InterruptedException {
-        SoftShakeMixer6 softShakeMixer = new SoftShakeMixer6();
+        SoftShakeMixer7notSoReliable softShakeMixer = new SoftShakeMixer7notSoReliable();
         finished.await();
         System.out.println("That was time !");
         softShakeMixer.mySynthesizer.stop();

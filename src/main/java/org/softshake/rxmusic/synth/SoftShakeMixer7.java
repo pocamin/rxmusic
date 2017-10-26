@@ -7,7 +7,10 @@ import io.reactivex.subjects.Subject;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import static io.reactivex.Observable.just;
 import static org.softshake.rxmusic.synth.MySynthesizer.MED_VELOCITY;
+import static org.softshake.rxmusic.synth.MySynthesizer.NO_NOTE;
+import static org.softshake.rxmusic.synth.SoundConstants.*;
 import static org.softshake.rxmusic.synth.Utils.DO_NOTHING_ON_ERROR;
 
 public class SoftShakeMixer7 {
@@ -18,25 +21,29 @@ public class SoftShakeMixer7 {
 
 
     private static Observable<Integer> MELODY = Observable.fromArray(
-            SoundConstants.NoteC,
-            SoundConstants.NoteG,
-            SoundConstants.NoteA
+            NoteC,
+            NoteF,
+            NoteG,
+            NoteDownDp
     );
 
     /**
-     * Lets add more complex rhythms
-     * I don't want to play all day long
+     * I don't like fugue and
+     * Oups I hit a black key
      */
     public SoftShakeMixer7() throws InterruptedException {
         Subject<Long> beat = PublishSubject.create();
         HarmonisationService harmonisationService = new HarmonisationService();
 
+        Observable<Integer> alternative = just(NoteC, NO_NOTE, NO_NOTE);
 
         Observable<Integer> playedNotes = MELODY
                 .repeat(100)
                 .flatMap(note ->
-                        harmonisationService.getOneChordFromMajorScaleContainingNote(SoundConstants.NoteC, note)
-                                .concatWith(Observable.just(MySynthesizer.NO_NOTE).repeat(5))
+                        harmonisationService
+                                .getOneChordFromMajorScaleContainingNote(NoteC, note)
+                                .onErrorResumeNext(alternative)
+                                .concatWith(just(NO_NOTE))
 
                 )
                 .zipWith(beat, (note, __) -> note);
@@ -45,7 +52,7 @@ public class SoftShakeMixer7 {
                 MED_VELOCITY));
 
 
-        Observable.interval(250, TimeUnit.MILLISECONDS)
+        Observable.interval(125, TimeUnit.MILLISECONDS)
                 .take(15, TimeUnit.SECONDS)
                 .subscribe(beat::onNext, DO_NOTHING_ON_ERROR, () -> {
                     beat.onComplete();
